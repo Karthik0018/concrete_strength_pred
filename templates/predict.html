@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Predict Strength{% endblock %}
+
+{% block content %}
+<!-- Predict Hero -->
+<section class="bg-primary text-white py-4">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold">Concrete Strength Predictor</h1>
+        <p class="lead">Enter the mixture proportions to predict compressive strength</p>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                {% if prediction %}
+                <!-- Prediction Result Card -->
+                <div class="card mb-4 border-0 shadow-lg">
+                    <div class="card-body text-center p-5">
+                        <h2 class="mb-4">Predicted Strength</h2>
+                        <div class="display-1 fw-bold text-primary mb-3">{{ prediction }} MPa</div>
+                        <div class="mb-3">
+                            <span class="{{ badge_class }} p-3 fs-5 rounded-pill">{{ category }}</span>
+                        </div>
+                        <hr class="my-4">
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <p class="text-secondary mb-0">Mixture Age</p>
+                                <p class="h5">{{ form_data.age }} days</p>
+                            </div>
+                            <div class="col-sm-6">
+                                <p class="text-secondary mb-0">Water-Cement Ratio</p>
+                                <p class="h5">{{ "%.2f"|format(form_data.water|float / form_data.cement|float) }}</p>
+                            </div>
+                        </div>
+                        <a href="{{ url_for('predict') }}" class="btn btn-outline-primary btn-lg mt-4">
+                            <i class="bi bi-arrow-repeat me-2"></i>New Prediction
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if error %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endif %}
+
+                <!-- Prediction Form -->
+                <div class="card border-0 shadow">
+                    <div class="card-header bg-primary text-white py-3">
+                        <h4 class="mb-0"><i class="bi bi-sliders2 me-2"></i>Input Parameters</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <form method="POST" action="{{ url_for('predict') }}" id="predictionForm">
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <label for="cement" class="form-label fw-bold">
+                                        <i class="bi bi-droplet text-primary me-2"></i>Cement (kg/m³)
+                                    </label>
+                                    <input type="number" step="0.1" class="form-control form-control-lg" id="cement" name="cement" 
+                                           value="{{ form_data.cement if form_data else 281 }}" required>
+                                    <div class="form-text">Range: 102 - 540</div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="slag" class="form-label fw-bold">
+                                        <i class="bi bi-gear text-secondary me-2"></i>Blast Furnace Slag (kg/m³)
+                                    </label>
+                                    <input type="number" step="0.1" class="form-control form-control-lg" id="slag" name="slag"
+                                           value="{{ form_data.slag if form_data else 73 }}" required>
+                                    <div class="form-text">Range: 0 - 359</div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="fly_ash" class="form-label fw-bold">
+                                        <i class="bi bi-cloud text-info me-2"></i>Fly Ash (kg/m³)
+                                    </label>
+                                    <input type="number" step="0.1" class="form-control form-control-lg" id="fly_ash" name="fly_ash"
+                                           value="{{ form_data.fly_ash if form_data else 54 }}" required>
+                                    <div class="form-text">Range: 0 - 200</div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="water" class="form-label fw-bold">
+                                        <i class="bi bi-water text-primary me-2"></i>Water (kg/m³)
+                                    </label>
+                                    <input type="number" step="0.1" class="form-control form-control-lg" id="water" name="water"
+                                           value="{{ form_data.water if form_data else 182 }}" required>
+                                    <div class="form-text">Range: 121 - 247</div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="superplasticizer" class="form-label fw-bold">
+                                        <i class="bi bi-lightning-charge text-warning me-2"></i>Superplasticizer (kg/m³)
+                                    </label>
+                                    <input type="number" step="0.1" class="form-control form-control-lg" id="superplasticizer" name="superplasticizer"
+                                           value="{{ form_data.superplasticizer if form_data else 6.2 }}" required>
+                                    <div class="form-text">Range: 0 - 32.2</div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="coarse_agg" class="form-label fw-bold">
+                                        <i class="bi bi-mountain text-success me-2"></i>Coarse Aggregate (kg/m³)
+                                    </label>
+                                    <input type="number" step="0.1" class="form-control form-control-lg" id="coarse_agg" name="coarse_agg"
+                                           value="{{ form_data.coarse_agg if form_data else 973 }}" required>
+                                    <div class="form-text">Range: 801 - 1145</div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="fine_agg" class="form-label fw-bold">
+                                        <i class="bi bi-cube text-danger me-2"></i>Fine Aggregate (kg/m³)
+                                    </label>
+                                    <input type="number" step="0.1" class="form-control form-control-lg" id="fine_agg" name="fine_agg"
+                                           value="{{ form_data.fine_agg if form_data else 774 }}" required>
+                                    <div class="form-text">Range: 594 - 993</div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="age" class="form-label fw-bold">
+                                        <i class="bi bi-calendar text-purple me-2"></i>Age (days)
+                                    </label>
+                                    <input type="number" class="form-control form-control-lg" id="age" name="age"
+                                           value="{{ form_data.age if form_data else 28 }}" required>
+                                    <div class="form-text">Range: 1 - 365</div>
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="alert alert-info" id="wcRatioAlert" style="display: none;">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        <span id="wcRatioValue"></span>
+                                    </div>
+                                </div>
+
+                                <div class="col-12 mt-4">
+                                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                                        <i class="bi bi-calculator me-2"></i>Predict Strength
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Info Card -->
+                <div class="card mt-4 border-0 bg-light">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-info-circle text-info me-2"></i>About the Prediction
+                        </h5>
+                        <p class="card-text text-secondary">
+                            This model uses a Random Forest Regressor trained on 1030 concrete samples from the UCI Machine Learning Repository. 
+                            The prediction accuracy is approximately 89% (R² score). For best results, ensure your input values are within the typical ranges shown.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Water-cement ratio calculator
+document.addEventListener('DOMContentLoaded', function() {
+    const cement = document.getElementById('cement');
+    const water = document.getElementById('water');
+    const wcAlert = document.getElementById('wcRatioAlert');
+    const wcValue = document.getElementById('wcRatioValue');
+    
+    function calculateWCRatio() {
+        const c = parseFloat(cement.value) || 0;
+        const w = parseFloat(water.value) || 0;
+        
+        if (c > 0) {
+            const ratio = (w / c).toFixed(2);
+            wcValue.innerHTML = `Water-Cement Ratio: ${ratio}`;
+            wcAlert.style.display = 'block';
+            
+            if (ratio < 0.3) {
+                wcAlert.className = 'alert alert-warning';
+                wcValue.innerHTML += ' (Low - may affect workability)';
+            } else if (ratio > 0.8) {
+                wcAlert.className = 'alert alert-danger';
+                wcValue.innerHTML += ' (High - may reduce strength)';
+            } else {
+                wcAlert.className = 'alert alert-success';
+                wcValue.innerHTML += ' (Optimal range)';
+            }
+        }
+    }
+    
+    cement.addEventListener('input', calculateWCRatio);
+    water.addEventListener('input', calculateWCRatio);
+    
+    // Initial calculation if values exist
+    if (cement.value && water.value) {
+        calculateWCRatio();
+    }
+});
+
+// Form submission loading state
+document.getElementById('predictionForm').addEventListener('submit', function(e) {
+    const btn = this.querySelector('button[type="submit"]');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Predicting...';
+    btn.disabled = true;
+});
+</script>
+{% endblock %}
